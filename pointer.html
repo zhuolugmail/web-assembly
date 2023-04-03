@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Function Pointer</title>
+</head>
+
+<body>
+    <p>Hello, WebAssembly!</p>
+
+    <input type="number" id="a">
+
+    <button onclick="invokeCall()">Invoke</button>
+    <p id="ret"></p>
+
+    <script src="pointer.js"></script>
+    <script>
+
+        function callFromC(n) {
+            console.log('callFromC', n);
+            document.querySelector("#ret")
+                .innerHTML += `call from c ${n}<br/>`;
+        }
+
+        var loaded = 0;
+
+        function invokeCall() {
+            if (!loaded) {
+                var fptr = Module.addFunction(callFromC, 'vi');
+                Module._register_function(fptr);
+                loaded = 1;
+            }
+            Module._invoke_call();
+        }
+    </script>
+</body>
+
+</html>
