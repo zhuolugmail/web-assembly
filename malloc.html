@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Memory</title>
+</head>
+
+<body>
+    <p>Hello, WebAssembly!</p>
+
+    <input type="number" id="a">
+    <button onclick="run_wasm()">Trigger</button>
+    <button onclick="get_string()">Get string</button>
+    <p id="ret"></p>
+
+    <script>
+        var exports;
+        var mb = new WebAssembly.Memory({
+            initial: 1024,
+            maximum: 2048
+        });
+        function abortOnCannotGrowMemory(requestedSize) {
+            abort('Cannot enlarge memory arrays to size ' + requestedSize +
+                ' bytes (OOM). Either (1) compile with -sINITIAL_MEMORY=X with X higher than the current value ' + HEAP8.length + ', (2) compile with -sALLOW_MEMORY_GROWTH which allows increasing the size at runtime, or (3) if you want malloc to return NULL (0) instead of this abort, compile with -sABORTING_MALLOC=0');
+        }
+        function _emscripten_resize_heap(requestedSize) {
+            var oldSize = HEAPU8.length;
+            requestedSize = requestedSize >>> 0;
+            abortOnCannotGrowMemory(requestedSize);
+        }
+
+        WebAssembly.instantiateStreaming(
+            fetch("malloc.wasm"), {
+            js: {
+                mem: mb
+            },
+            env: {
+                "emscripten_resize_heap": _emscripten_resize_heap
+            }
+        }
+        ).then(results => {
+            exports = results.instance.exports;
+            memory = exports.memory;
+        });
+
+        function init_array(n) {
+            var ptr = exports.wasm_malloc(n * 4);
+            var arr = new Uint32Array(memory.buffer, ptr);
+            var i;
+            for (i = 0; i < n; i++)
+                arr[i] = 2 * i;
+            return ptr;
+        }
+
+        function run_wasm() {
+            var a = document.querySelector("#a").value;
+            var n = 12;
+
+            var ptr = init_array(n);
+
+            var sum = exports.sumArray(ptr, n);
+
+            document.querySelector("#ret")
+                .innerHTML += `${sum}<br/>`;
+
+            exports.wasm_free(ptr);
+        }
+
+        function decode_string(ptr) {
+            bytes = new Uint8Array(memory.buffer, ptr);
+            var len = 0;
+            while (bytes[len]) len++;
+
+            return new TextDecoder('utf8').decode(bytes.slice(0, len));
+        }
+        function get_string() {
+            var ptr = exports.astring();
+            console.log(ptr);
+
+            str = decode_string(ptr);
+
+            document.querySelector("#ret")
+                .innerHTML += `${str}<br/>`;
+        }
+
+    </script>
+
+</body>
+
+</html>
