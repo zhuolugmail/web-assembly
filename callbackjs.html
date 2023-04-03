@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Callback</title>
+    <style>
+        #progress {
+            height: 30px;
+            width: 0px;
+            display: block;
+            background-color: navy;
+        }
+    </style>
+</head>
+
+<body>
+    <p>Hello, WebAssembly!</p>
+
+    <input type="number" id="a">
+
+    <button onclick="get_string()">Get string</button>
+    <div id="progress"></div>
+    <p id="ret"></p>
+
+    <script src="callbackjs.js"></script>
+    <script src="callback.js"></script>
+
+</body>
+
+</html>
