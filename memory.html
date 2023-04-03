@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Memory</title>
+</head>
+
+<body>
+    <p>Hello, WebAssembly!</p>
+
+    <input type="number" id="a">
+    <button onclick="run_wasm()">Trigger</button>
+    <button onclick="get_string()">Get string</button>
+    <p id="ret"></p>
+
+    <script>
+        var exports;
+        var mb = new WebAssembly.Memory({
+            initial: 1024,
+            maximum: 2048
+        });
+
+        WebAssembly.instantiateStreaming(
+            fetch("memory.wasm"), {
+            js: {
+                mem: mb
+            }
+        }
+        ).then(results => {
+            exports = results.instance.exports;
+            memory = exports.memory;
+        });
+
+        function run_wasm() {
+            var a = document.querySelector("#a").value;
+
+            var arr = new Uint32Array(memory.buffer, 165536);
+            var i;
+            for (i = 0; i < 10; i++)
+                arr[i] = 2 * i;
+
+            var sum = exports.sumArray(165536, 10);
+
+            document.querySelector("#ret")
+                .innerHTML += `${sum}<br/>`;
+        }
+
+        function get_string() {
+            var ptr = exports.astring();
+            console.log(ptr);
+            bytes = new Uint8Array(memory.buffer, ptr);
+            var len = 0;
+            while (bytes[len]) len++;
+
+            var str = new TextDecoder('utf8').decode(bytes.slice(0, len));
+            document.querySelector("#ret")
+                .innerHTML += `${str}<br/>`;
+        }
+
+    </script>
+
+</body>
+
+</html>
