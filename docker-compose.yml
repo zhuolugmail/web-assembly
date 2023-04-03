@@ -1,0 +1,11 @@
+version: '3.6'
+services:
+  dev:
+    build: ./devcontainer
+    image: emscripten-tools
+    container_name: emscripten
+    user:  ${USER_ID}:${GROUP_ID}
+    volumes: 
+      - ./workarea:/workarea
+    command: tail -f /dev/null
+   
